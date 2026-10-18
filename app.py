@@ -256,6 +256,86 @@ st.dataframe(
 if "comentarios_nuevos" not in st.session_state:
     st.session_state.comentarios_nuevos = []
 
+# CONCLUSIONES Y RECOMENDACIONES
+st.subheader("📋 Conclusiones y recomendaciones")
+
+with st.container(border=True):
+    total_comentarios = len(df)
+
+    cantidad_negativos = (
+        df["Sentimiento"].astype(str).str.strip().str.lower()
+        == "negativo"
+    ).sum()
+
+    cantidad_urgentes = (
+        df["Urgencia"].astype(str).str.strip().str.lower()
+        == "alta"
+    ).sum()
+
+    porcentaje_negativos = (
+        cantidad_negativos / total_comentarios * 100
+        if total_comentarios else 0
+    )
+
+    categorias_frecuentes = (
+        df["Categoría"]
+        .astype(str)
+        .value_counts()
+    )
+
+    if not categorias_frecuentes.empty:
+        principal_categoria = categorias_frecuentes.index[0]
+    else:
+        principal_categoria = "Sin datos"
+
+    st.markdown("#### 🔎 ¿Qué está pasando en MÍA Store?")
+
+    st.write(
+        f"El {porcentaje_negativos:.0f}% de los comentarios "
+        "analizados son negativos. "
+        f"Además, se identificaron {cantidad_urgentes} "
+        "comentarios de alta urgencia que requieren "
+        "atención prioritaria."
+    )
+
+    st.write(
+        f"La categoría con mayor cantidad de comentarios "
+        f"es **{principal_categoria}**, por lo que "
+        "conviene analizarla para detectar posibles "
+        "oportunidades de mejora."
+    )
+
+    st.markdown("#### 💡 ¿Qué debería hacer la empresa?")
+
+    if cantidad_urgentes > 0:
+        st.write(
+            "🚨 **Priorizar los reclamos urgentes:** "
+            "contactar a esos clientes y ofrecer "
+            "soluciones personalizadas."
+        )
+
+    if porcentaje_negativos >= 30:
+        st.write(
+            "📉 **Mejorar la experiencia del cliente:** "
+            "revisar las causas de los comentarios "
+            "negativos para evitar que se repitan."
+        )
+
+    st.write(
+        f"📊 **Revisar la categoría {principal_categoria}:** "
+        "analizar los comentarios de esta categoría "
+        "para identificar problemas recurrentes."
+    )
+
+    st.write(
+        "🤎 **Dar seguimiento a los clientes:** "
+        "utilizar las respuestas sugeridas por Gemini "
+        "como punto de partida, revisándolas antes "
+        "de enviarlas."
+    )
+
+st.divider()
+
 # ANALISIS EN VIVO
 st.write("")
 st.subheader("✨ Analizar con inteligencia artificial")
