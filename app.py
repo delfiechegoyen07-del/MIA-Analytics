@@ -81,10 +81,15 @@ st.markdown("""
     letter-spacing:2px;margin:0;">
     MÍA STORE / CUSTOMER INTELLIGENCE
     </p>
-    <h1 style="color:white !important;
-    margin:12px 0;font-size:38px;">
+    <div style="
+    color:#FFFFFF;
+    font-size:38px;
+    font-weight:800;
+    line-height:1.3;
+    margin:12px 0;
+">
     MÍA Analytics
-    </h1>
+</div>
     <p style="color:#EADBCD;margin:0;">
     Entendé a tus clientes. Mejorá su experiencia.
     </p>
