@@ -6,269 +6,309 @@ import json
 from pathlib import Path
 from google import genai
 
-# CONFIGURACIÓN
 st.set_page_config(
     page_title="MÍA Analytics | MÍA Store",
     page_icon="🤎",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# DISEÑO CREMA Y CHOCOLATE
+# COLORES Y ESTILO
+CHOCOLATE = "#4A342B"
+CREMA = "#F5F0E8"
+MARRON = "#755647"
+ARENA = "#C8AC96"
+
 st.markdown("""
 <style>
 .stApp {
-    background-color: #F6F1E9;
-    color: #382E2B;
+    background-color: #F5F0E8;
+    color: #4A342B;
 }
-h1, h2, h3 {
-    color: #382E2B !important;
+.block-container {
+    max-width: 1150px;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+h1, h2, h3, p {
+    color: #4A342B;
 }
 div[data-testid="stMetric"] {
     background: #FFFFFF;
-    padding: 20px;
+    padding: 18px;
     border-radius: 16px;
-    border: 1px solid #E7DED3;
+    border: 1px solid #E9DFD4;
+}
+div[data-testid="stMetricValue"] {
+    color: #4A342B;
 }
 div[data-testid="stMetricLabel"] {
     color: #806653;
 }
-div[data-testid="stMetricValue"] {
-    color: #382E2B;
-}
-.stButton > button {
-    background-color: #382E2B;
+.stButton > button[kind="primary"] {
+    background: #4A342B;
     color: white;
-    border-radius: 12px;
     border: none;
-    padding: 10px 20px;
+    border-radius: 12px;
 }
-.stButton > button:hover {
-    background-color: #806653;
+.stButton > button[kind="primary"]:hover {
+    background: #755647;
     color: white;
 }
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 16px;
+    border-radius: 18px;
+}
+@media (max-width: 768px) {
+    .block-container {
+        padding: 1rem;
+    }
+    div[data-testid="stMetric"] {
+        padding: 12px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ENCABEZADO
-st.title("MÍA Analytics")
-st.caption("CUSTOMER INTELLIGENCE · MÍA STORE")
-st.markdown(
-    "Transformamos los comentarios de nuestros clientes "
-    "en información útil para mejorar su experiencia."
-)
+st.markdown("""
+<div style="
+    background:#4A342B;
+    padding:32px;
+    border-radius:22px;
+    margin-bottom:25px;
+">
+    <p style="color:#EADBCD;font-size:12px;
+    letter-spacing:2px;margin:0;">
+    MÍA STORE / CUSTOMER INTELLIGENCE
+    </p>
+    <h1 style="color:white !important;
+    margin:12px 0;font-size:38px;">
+    MÍA Analytics
+    </h1>
+    <p style="color:#EADBCD;margin:0;">
+    Entendé a tus clientes. Mejorá su experiencia.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-st.divider()
-
-# CARGAR LOS 50 COMENTARIOS AUTOMÁTICAMENTE
+# DATOS
 ruta = Path(__file__).parent / "MIA_Analytics_Resultados.xlsx"
 
 if ruta.exists():
     df = pd.read_excel(ruta)
-else:
-    st.warning("No se encontró el archivo de resultados.")
-    df = pd.DataFrame()
-
-if not df.empty:
     df.columns = df.columns.str.strip()
+else:
+    st.error("No se encontró el archivo de resultados.")
+    st.stop()
 
-    # INDICADORES
-    total = len(df)
-    negativos = (
-        df["Sentimiento"].astype(str).str.strip().str.lower()
-        == "negativo"
-    ).sum()
-    urgentes = (
-        df["Urgencia"].astype(str).str.strip().str.lower()
-        == "alta"
-    ).sum()
+# RESUMEN
+st.subheader("Resumen general")
 
-    st.subheader("Resumen general")
+total = len(df)
+negativos = (
+    df["Sentimiento"].astype(str).str.strip().str.lower()
+    == "negativo"
+).sum()
+urgentes = (
+    df["Urgencia"].astype(str).str.strip().str.lower()
+    == "alta"
+).sum()
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Comentarios analizados", total)
-    c2.metric("Comentarios negativos", int(negativos))
-    c3.metric("Reclamos urgentes", int(urgentes))
+c1, c2, c3 = st.columns(3)
 
-    st.divider()
+c1.metric("Comentarios analizados", total)
+c2.metric("Comentarios negativos", int(negativos))
+c3.metric("Reclamos urgentes", int(urgentes))
 
-    # GRÁFICOS
-    st.subheader("Comportamiento de los clientes")
+st.write("")
 
-    g1, g2 = st.columns(2)
+# GRAFICOS
+st.subheader("Comportamiento de los clientes")
 
-    with g1:
-        sentimiento = (
-            df["Sentimiento"].value_counts()
-            .reset_index()
-        )
-        sentimiento.columns = ["Sentimiento", "Cantidad"]
+sentimientos = (
+    df["Sentimiento"].value_counts()
+    .reset_index()
+)
+sentimientos.columns = ["Sentimiento", "Cantidad"]
 
+categorias = (
+    df["Categoría"].value_counts()
+    .reset_index()
+)
+categorias.columns = ["Categoría", "Cantidad"]
+
+g1, g2 = st.columns(2)
+
+with g1:
+    with st.container(border=True):
         fig1 = px.pie(
-            sentimiento,
+            sentimientos,
             names="Sentimiento",
             values="Cantidad",
-            hole=0.55,
+            hole=0.62,
             title="Sentimiento de los clientes",
-            color_discrete_sequence=[
-                "#806653", "#D9C6B0", "#B7A08B"
-            ]
+            color="Sentimiento",
+            color_discrete_map={
+                "Negativo": "#755647",
+                "Neutral": "#C8AC96",
+                "Positivo": "#E5D6C7"
+            }
         )
         fig1.update_layout(
+            height=330,
+            margin=dict(l=10, r=10, t=55, b=10),
             paper_bgcolor="rgba(0,0,0,0)",
-            font_color="#382E2B"
+            font_color=CHOCOLATE,
+            legend=dict(orientation="h", y=-0.05)
+        )
+        fig1.update_traces(
+            textinfo="percent",
+            textposition="inside"
         )
         st.plotly_chart(fig1, use_container_width=True)
 
-    with g2:
-        categorias = (
-            df["Categoría"].value_counts()
-            .reset_index()
-        )
-        categorias.columns = ["Categoría", "Cantidad"]
-
+with g2:
+    with st.container(border=True):
         fig2 = px.bar(
             categorias,
             x="Cantidad",
             y="Categoría",
             orientation="h",
             title="Temas más mencionados",
-            color_discrete_sequence=["#806653"]
+            color_discrete_sequence=[MARRON]
         )
         fig2.update_layout(
+            height=330,
+            margin=dict(l=10, r=10, t=55, b=10),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            font_color="#382E2B",
+            font_color=CHOCOLATE,
             yaxis={"categoryorder": "total ascending"}
         )
         st.plotly_chart(fig2, use_container_width=True)
 
-    st.divider()
+# RECLAMOS URGENTES
+st.write("")
+st.subheader("🚨 Reclamos prioritarios")
 
-    # RECLAMOS URGENTES
-    st.subheader("🚨 Reclamos que requieren atención")
+reclamos = df[
+    df["Urgencia"].astype(str).str.strip().str.lower()
+    == "alta"
+]
 
-    reclamos = df[
-        df["Urgencia"].astype(str).str.strip().str.lower()
-        == "alta"
-    ]
+st.markdown(
+    f"**{len(reclamos)} comentarios** requieren "
+    "atención prioritaria."
+)
 
+with st.container(border=True):
+    for _, fila in reclamos.iterrows():
+        st.markdown(
+            f"**Cliente #{fila['ID']} · {fila['Categoría']}**"
+        )
+        st.write(f"💬 {fila['Comentario del cliente']}")
+        with st.expander("Ver respuesta sugerida"):
+            st.write(fila["Respuesta sugerida"])
+        st.divider()
+
+# EXPLORAR COMENTARIOS
+st.write("")
+st.subheader("Explorar comentarios")
+
+filtro = st.selectbox(
+    "Filtrar por sentimiento",
+    ["Todos", "Positivo", "Neutral", "Negativo"]
+)
+
+filtrados = (
+    df if filtro == "Todos"
+    else df[df["Sentimiento"] == filtro]
+)
+
+st.dataframe(
+    filtrados,
+    use_container_width=True,
+    hide_index=True
+)
+
+# ANALISIS EN VIVO
+st.write("")
+st.subheader("✨ Analizar con inteligencia artificial")
+
+with st.container(border=True):
     st.write(
-        f"Se identificaron **{len(reclamos)} comentarios** "
-        "que requieren atención prioritaria."
+        "Ingresá un comentario nuevo y Gemini identificará "
+        "su categoría, sentimiento y urgencia."
     )
 
-    st.dataframe(
-        reclamos,
-        use_container_width=True,
-        hide_index=True
+    comentario = st.text_area(
+        "Comentario del cliente",
+        placeholder="Escribí acá el comentario...",
+        height=120
     )
 
-    st.divider()
+    if st.button(
+        "🤎 Analizar comentario",
+        type="primary",
+        use_container_width=True
+    ):
+        if not comentario.strip():
+            st.warning("Primero escribí un comentario.")
+        else:
+            try:
+                with st.spinner("Gemini está analizando..."):
+                    client = genai.Client(
+                        api_key=st.secrets["GEMINI_API_KEY"]
+                    )
 
-    # EXPLORADOR DE COMENTARIOS
-    st.subheader("Explorar comentarios")
+                    prompt = """
+                    Sos el analista de clientes de MÍA Store,
+                    una tienda online uruguaya.
 
-    opciones = ["Todos"] + sorted(
-        df["Sentimiento"].dropna().astype(str).unique()
-    )
+                    Analizá el comentario y devolvé
+                    únicamente un JSON con:
+                    "categoria", "sentimiento",
+                    "urgencia", "respuesta".
 
-    filtro = st.selectbox(
-        "Filtrar por sentimiento",
-        opciones
-    )
+                    Categorías: Envíos, Talles, Calidad,
+                    Cambios y devoluciones, Atención, Otros.
+                    Sentimientos: Positivo, Negativo, Neutral.
+                    Urgencias: Alta, Media, Baja.
 
-    filtrados = (
-        df if filtro == "Todos"
-        else df[df["Sentimiento"] == filtro]
-    )
+                    La respuesta debe ser breve, amable
+                    y personalizada en español rioplatense.
+                    No inventes información sobre pedidos
+                    ni prometas soluciones no confirmadas.
 
-    st.dataframe(
-        filtrados,
-        use_container_width=True,
-        hide_index=True
-    )
+                    Comentario:
+                    """
 
-# ANÁLISIS EN VIVO
-st.divider()
-st.subheader("🤖 Analizar un comentario con Gemini")
+                    respuesta = client.models.generate_content(
+                        model="gemini-3.8-flash",
+                        contents=prompt + comentario,
+                        config={
+                            "response_mime_type": "application/json"
+                        }
+                    )
 
-st.write(
-    "Ingresá un comentario nuevo y la inteligencia artificial "
-    "identificará su categoría, sentimiento y urgencia, "
-    "además de sugerir una respuesta."
-)
+                    analisis = json.loads(respuesta.text)
 
-comentario = st.text_area(
-    "Comentario del cliente",
-    placeholder="Escribí acá el comentario...",
-    height=130
-)
+                st.success("¡Análisis completado!")
 
-if st.button("✨ Analizar comentario", type="primary"):
-    if not comentario.strip():
-        st.warning("Primero escribí un comentario.")
-    else:
-        try:
-            with st.spinner("Analizando con Gemini..."):
-                client = genai.Client(
-                    api_key=st.secrets["GEMINI_API_KEY"]
-                )
+                a, b, c = st.columns(3)
+                a.metric("Categoría", analisis["categoria"])
+                b.metric("Sentimiento", analisis["sentimiento"])
+                c.metric("Urgencia", analisis["urgencia"])
 
-                prompt = """
-                Sos el analista de clientes de MÍA Store,
-                una tienda online uruguaya de ropa y accesorios.
+                st.markdown("#### Respuesta sugerida")
+                st.info(analisis["respuesta"])
 
-                Analizá este comentario y devolvé
-                únicamente un JSON válido con las claves:
-                "categoria", "sentimiento", "urgencia", "respuesta".
-
-                Categorías posibles: Envíos, Talles, Calidad,
-                Cambios y devoluciones, Atención u Otros.
-
-                Sentimientos: Positivo, Negativo o Neutral.
-                Urgencias: Alta, Media o Baja.
-
-                Marcá urgencia alta ante reclamos graves,
-                demoras importantes o clientes muy molestos.
-
-                La respuesta debe ser breve, amable,
-                personalizada y en español rioplatense.
-                No inventes información ni prometas
-                soluciones que no estén confirmadas.
-
-                Comentario del cliente:
-                """
-
-                respuesta = client.models.generate_content(
-                    model="gemini-3.8-flash",
-                    contents=prompt + comentario,
-                    config={
-                        "response_mime_type": "application/json"
-                    }
-                )
-
-                analisis = json.loads(respuesta.text)
-
-            st.success("¡Análisis completado!")
-
-            a, b, c = st.columns(3)
-            a.metric("Categoría", analisis["categoria"])
-            b.metric("Sentimiento", analisis["sentimiento"])
-            c.metric("Urgencia", analisis["urgencia"])
-
-            st.markdown("#### Respuesta sugerida")
-            st.info(analisis["respuesta"])
-
-        except Exception as error:
-            st.error("No se pudo analizar el comentario.")
-            st.caption(str(error))
+            except Exception as error:
+                st.error("No se pudo analizar el comentario.")
+                st.caption(str(error))
 
 st.divider()
 st.caption(
     "MÍA Analytics · Proyecto académico de eCommerce "
-    "· Datos simulados · Análisis asistido por Gemini"
+    "· Datos simulados · Powered by Gemini"
 )
-
