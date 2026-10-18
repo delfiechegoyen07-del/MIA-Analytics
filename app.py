@@ -236,6 +236,10 @@ st.dataframe(
     hide_index=True
 )
 
+# GUARDAR LOS COMENTARIOS NUEVOS DURANTE LA SESIÓN
+if "comentarios_nuevos" not in st.session_state:
+    st.session_state.comentarios_nuevos = []
+
 # ANALISIS EN VIVO
 st.write("")
 st.subheader("✨ Analizar con inteligencia artificial")
@@ -298,6 +302,21 @@ with st.container(border=True):
 
                     analisis = json.loads(respuesta.text)
 
+                nuevo_resultado = {
+                    "ID": len(df) + len(
+                        st.session_state.comentarios_nuevos
+                    ) + 1,
+                    "Comentario del cliente": comentario,
+                    "Categoría": analisis["categoria"],
+                    "Sentimiento": analisis["sentimiento"],
+                    "Urgencia": analisis["urgencia"],
+                    "Respuesta sugerida": analisis["respuesta"]
+                }
+
+                st.session_state.comentarios_nuevos.append(
+                    nuevo_resultado
+                )
+
                 st.success("¡Análisis completado!")
 
                 a, b, c = st.columns(3)
@@ -311,6 +330,47 @@ with st.container(border=True):
             except Exception as error:
                 st.error("No se pudo analizar el comentario.")
                 st.caption(str(error))
+
+
+# DESCARGAR RESULTADOS ACTUALIZADOS
+if st.session_state.comentarios_nuevos:
+    st.subheader("📥 Descargar análisis")
+
+    st.write(
+        f"Analizaste {len(st.session_state.comentarios_nuevos)} "
+        "comentarios nuevos en esta sesión."
+    )
+
+    nuevos_df = pd.DataFrame(
+        st.session_state.comentarios_nuevos
+    )
+
+    resultados_actualizados = pd.concat(
+        [df, nuevos_df],
+        ignore_index=True
+    )
+
+    from io import BytesIO
+
+    archivo_excel = BytesIO()
+
+    with pd.ExcelWriter(
+        archivo_excel,
+        engine="openpyxl"
+    ) as writer:
+        resultados_actualizados.to_excel(
+            writer,
+            index=False,
+            sheet_name="Analisis de clientes"
+        )
+
+    st.download_button(
+        label="📥 Descargar Excel actualizado",
+        data=archivo_excel.getvalue(),
+        file_name="MIA_Analytics_Actualizado.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
 st.divider()
 st.caption(
