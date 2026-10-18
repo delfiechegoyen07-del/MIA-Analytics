@@ -66,6 +66,22 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
         padding: 12px;
     }
 }
+
+/* Botón Analizar comentario */
+div.stButton > button[kind="primary"] {
+    background-color: #4A342B !important;
+    color: #FFFFFF !important;
+    border-color: #4A342B !important;
+}
+
+div.stButton > button[kind="primary"] p {
+    color: #FFFFFF !important;
+}
+
+div.stButton > button[kind="primary"]:hover {
+    background-color: #755647 !important;
+    color: #FFFFFF !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
