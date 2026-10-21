@@ -239,6 +239,32 @@ div[data-testid="stSelectbox"] div[data-baseweb="select"] svg {
     fill: #4A342B !important;
     -webkit-text-fill-color: #4A342B !important;
 }
+/* Botón Descargar Excel: mismo chocolate que Analizar comentario. */
+div[data-testid="stDownloadButton"] button,
+div.stDownloadButton > button {
+    background: #4A342B !important;
+    background-color: #4A342B !important;
+    color: #FFFFFF !important;
+    border: 1px solid #4A342B !important;
+    border-radius: 12px !important;
+}
+div[data-testid="stDownloadButton"] button *,
+div.stDownloadButton > button * {
+    color: #FFFFFF !important;
+    fill: #FFFFFF !important;
+    stroke: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+div[data-testid="stDownloadButton"] button:hover,
+div.stDownloadButton > button:hover {
+    background: #755647 !important;
+    background-color: #755647 !important;
+    border-color: #755647 !important;
+}
+div[data-testid="stDownloadButton"] button:focus-visible {
+    outline: 2px solid #C8AC96 !important;
+    outline-offset: 2px;
+}
 /* Las sugerencias de respuesta conservan el estilo crema. */
 div[data-testid="stExpander"] {
     background: #FFFDF9 !important;
@@ -473,27 +499,54 @@ with st.container(border=True):
 
                     
                     respuesta = None
+                    ultimo_error = None
 
-                    for intento in range(3):
-                        try:
-                            respuesta = client.models.generate_content(
-                                model="gemini-3.8-flash",
-                                contents=prompt + comentario,
-                                config={"response_mime_type": "application/json"}
-                            )
+                    # Si el modelo principal está saturado, probar alternativas.
+                    # No cambia ninguna otra función ni el diseño de la app.
+                    modelos = (
+                        "gemini-3.8-flash",
+                        "gemini-2.5-flash",
+                        "gemini-2.5-flash-lite",
+                    )
+
+                    for modelo in modelos:
+                        for intento in range(3):
+                            try:
+                                respuesta = client.models.generate_content(
+                                    model=modelo,
+                                    contents=prompt + comentario,
+                                    config={"response_mime_type": "application/json"}
+                                )
+                                if not respuesta.text:
+                                    raise ValueError("Gemini devolvió una respuesta vacía.")
+                                break
+                            except Exception as error:
+                                ultimo_error = error
+                                codigo_error = getattr(error, "code", None)
+                                try:
+                                    codigo_error = int(codigo_error)
+                                except (TypeError, ValueError):
+                                    codigo_error = None
+                                mensaje_error = str(error).lower()
+                                es_temporal = (
+                                    codigo_error in (429, 500, 502, 503, 504)
+                                    or "unavailable" in mensaje_error
+                                    or "high demand" in mensaje_error
+                                    or "resource_exhausted" in mensaje_error
+                                )
+                                if es_temporal and intento < 2:
+                                    import time
+                                    time.sleep(2 * (intento + 1))
+                                else:
+                                    break
+                        if respuesta is not None:
                             break
 
-                        except Exception as error:
-                            codigo_error = getattr(error, "code", None)
-
-                            if codigo_error not in (429, 500, 502, 503, 504):
-                                raise
-
-                            if intento == 2:
-                                raise
-
-                            import time
-                            time.sleep(2 * (intento + 1))
+                    if respuesta is None:
+                        raise RuntimeError(
+                            "Gemini no está disponible en este momento. "
+                            "Esperá un momento y volvé a intentar."
+                        ) from ultimo_error
 
 
                     analisis = json.loads(respuesta.text)
@@ -523,9 +576,11 @@ with st.container(border=True):
                 st.markdown("#### Respuesta sugerida")
                 st.info(analisis["respuesta"])
 
-            except Exception as error:
-                st.error("No se pudo analizar el comentario.")
-                st.caption(str(error))
+            except Exception:
+                st.error(
+                    "No se pudo analizar el comentario en este momento. "
+                    "Gemini puede estar saturado. Esperá un momento y volvé a intentar."
+                )
 
 
 # DESCARGAR RESULTADOS ACTUALIZADOS
