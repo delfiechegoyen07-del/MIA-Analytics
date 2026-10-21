@@ -180,13 +180,13 @@ with g1:
             margin=dict(l=10, r=10, t=55, b=10),
             paper_bgcolor="rgba(0,0,0,0)",
             font_color=CHOCOLATE,
-            legend=dict(orientation="h", y=-0.05)
+            legend=dict(orientation="h", y=-0.12, font=dict(color=CHOCOLATE))
         )
         fig1.update_traces(
-            textinfo="percent",
+            textinfo="label+percent",
             textposition="inside"
         )
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, theme=None)
 
 with g2:
     with st.container(border=True):
@@ -200,13 +200,13 @@ with g2:
         )
         fig2.update_layout(
             height=330,
-            margin=dict(l=10, r=10, t=55, b=10),
+            margin=dict(l=110, r=20, t=55, b=30),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
             font_color=CHOCOLATE,
-            yaxis={"categoryorder": "total ascending"}
+            yaxis={"categoryorder": "total ascending", "automargin": True, "tickfont": {"color": CHOCOLATE}}
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 # RECLAMOS URGENTES
 st.write("")
