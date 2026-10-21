@@ -388,13 +388,30 @@ with st.container(border=True):
                     Comentario:
                     """
 
-                    respuesta = client.models.generate_content(
-                        model="gemini-3.8-flash",
-                        contents=prompt + comentario,
-                        config={
-                            "response_mime_type": "application/json"
-                        }
-                    )
+                    
+respuesta = None
+
+for intento in range(3):
+    try:
+        respuesta = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt + comentario,
+            config={"response_mime_type": "application/json"}
+        )
+        break
+
+    except Exception as error:
+        codigo_error = getattr(error, "code", None)
+
+        if codigo_error not in (429, 500, 502, 503, 504):
+            raise
+
+        if intento == 2:
+            raise
+
+        import time
+        time.sleep(2 * (intento + 1))
+
 
                     analisis = json.loads(respuesta.text)
 
