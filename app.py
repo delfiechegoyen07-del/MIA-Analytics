@@ -209,47 +209,79 @@ with g2:
         st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 # ESTILOS DE LAS SECCIONES INFERIORES
-# No modifica el encabezado, los indicadores ni los gráficos.
+# Se aplican después de los gráficos; no modifican la parte superior.
 st.markdown("""
 <style>
-/* Controles de filtro y escritura: fondo claro y texto chocolate */
-div[data-baseweb="select"] > div {
+/* Colores de controles de Streamlit (incluidos contenedores internos). */
+div[data-testid="stTextArea"] div[data-baseweb="textarea"],
+div[data-testid="stTextArea"] div[data-baseweb="textarea"] > div,
+div[data-testid="stTextArea"] textarea,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background: #FFFDF9 !important;
     background-color: #FFFDF9 !important;
     color: #4A342B !important;
-    border: 1px solid #D8C5B5 !important;
+    border-color: #D8C5B5 !important;
     border-radius: 12px !important;
 }
-div[data-baseweb="select"] span,
-div[data-baseweb="select"] svg {
-    color: #4A342B !important;
-    fill: #4A342B !important;
-}
-div[data-baseweb="textarea"] textarea,
-div[data-baseweb="input"] input {
-    background-color: #FFFDF9 !important;
+div[data-testid="stTextArea"] textarea {
     color: #4A342B !important;
     -webkit-text-fill-color: #4A342B !important;
-    border-radius: 12px !important;
     caret-color: #4A342B !important;
 }
-div[data-baseweb="textarea"] textarea::placeholder,
-div[data-baseweb="input"] input::placeholder {
-    color: #967F70 !important;
-    -webkit-text-fill-color: #967F70 !important;
+div[data-testid="stTextArea"] textarea::placeholder {
+    color: #90796C !important;
+    -webkit-text-fill-color: #90796C !important;
 }
-div[data-baseweb="popover"] li {
-    background-color: #FFFDF9;
-    color: #4A342B;
+div[data-testid="stSelectbox"] div[data-baseweb="select"] span,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] svg {
+    color: #4A342B !important;
+    fill: #4A342B !important;
+    -webkit-text-fill-color: #4A342B !important;
 }
+/* Las sugerencias de respuesta conservan el estilo crema. */
 div[data-testid="stExpander"] {
+    background: #FFFDF9 !important;
     border: 1px solid #E4D6C8 !important;
-    background-color: #FFFDF9 !important;
     border-radius: 12px !important;
 }
 div[data-testid="stExpander"] summary,
 div[data-testid="stExpander"] summary p {
     color: #4A342B !important;
 }
+/* Tabla propia: sin el tema azul/negro de la grilla de Streamlit. */
+.mia-tabla-contenedor {
+    max-height: 440px;
+    overflow: auto;
+    border: 1px solid #DFD0C2;
+    border-radius: 14px;
+    background: #FFFDF9;
+}
+.mia-tabla {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 850px;
+    font-size: 14px;
+    color: #4A342B;
+    background: #FFFDF9;
+}
+.mia-tabla th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #E8D9CB;
+    color: #4A342B;
+    text-align: left;
+    padding: 12px;
+    white-space: nowrap;
+}
+.mia-tabla td {
+    padding: 11px 12px;
+    border-bottom: 1px solid #E9DFD4;
+    vertical-align: top;
+    color: #4A342B;
+}
+.mia-tabla tbody tr:nth-child(even) { background: #F8F3ED; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -290,12 +322,17 @@ filtrados = (
     else df[df["Sentimiento"] == filtro]
 )
 
-st.dataframe(
-    filtrados.style.set_properties(
-        **{"background-color": "#FFFDF9", "color": "#4A342B"}
-    ),
-    use_container_width=True,
-    hide_index=True
+# HTML permite mantener el mismo diseño crema/chocolate en todos los dispositivos.
+# Se escapa el contenido de los comentarios para evitar interpretar HTML de clientes.
+tabla_html = filtrados.to_html(
+    index=False,
+    escape=True,
+    classes="mia-tabla",
+    border=0
+)
+st.markdown(
+    '<div class="mia-tabla-contenedor">' + tabla_html + '</div>',
+    unsafe_allow_html=True
 )
 
 # GUARDAR LOS COMENTARIOS NUEVOS DURANTE LA SESIÓN
