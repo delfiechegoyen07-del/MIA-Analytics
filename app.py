@@ -208,6 +208,51 @@ with g2:
         )
         st.plotly_chart(fig2, use_container_width=True, theme=None)
 
+# ESTILOS DE LAS SECCIONES INFERIORES
+# No modifica el encabezado, los indicadores ni los gráficos.
+st.markdown("""
+<style>
+/* Controles de filtro y escritura: fondo claro y texto chocolate */
+div[data-baseweb="select"] > div {
+    background-color: #FFFDF9 !important;
+    color: #4A342B !important;
+    border: 1px solid #D8C5B5 !important;
+    border-radius: 12px !important;
+}
+div[data-baseweb="select"] span,
+div[data-baseweb="select"] svg {
+    color: #4A342B !important;
+    fill: #4A342B !important;
+}
+div[data-baseweb="textarea"] textarea,
+div[data-baseweb="input"] input {
+    background-color: #FFFDF9 !important;
+    color: #4A342B !important;
+    -webkit-text-fill-color: #4A342B !important;
+    border-radius: 12px !important;
+    caret-color: #4A342B !important;
+}
+div[data-baseweb="textarea"] textarea::placeholder,
+div[data-baseweb="input"] input::placeholder {
+    color: #967F70 !important;
+    -webkit-text-fill-color: #967F70 !important;
+}
+div[data-baseweb="popover"] li {
+    background-color: #FFFDF9;
+    color: #4A342B;
+}
+div[data-testid="stExpander"] {
+    border: 1px solid #E4D6C8 !important;
+    background-color: #FFFDF9 !important;
+    border-radius: 12px !important;
+}
+div[data-testid="stExpander"] summary,
+div[data-testid="stExpander"] summary p {
+    color: #4A342B !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # RECLAMOS URGENTES
 st.write("")
 st.subheader("🚨 Reclamos prioritarios")
@@ -222,15 +267,14 @@ st.markdown(
     "atención prioritaria."
 )
 
-with st.container(border=True):
-    for _, fila in reclamos.iterrows():
+for _, fila in reclamos.iterrows():
+    with st.container(border=True):
         st.markdown(
             f"**Cliente #{fila['ID']} · {fila['Categoría']}**"
         )
         st.write(f"💬 {fila['Comentario del cliente']}")
         with st.expander("Ver respuesta sugerida"):
             st.write(fila["Respuesta sugerida"])
-        st.divider()
 
 # EXPLORAR COMENTARIOS
 st.write("")
@@ -247,7 +291,9 @@ filtrados = (
 )
 
 st.dataframe(
-    filtrados,
+    filtrados.style.set_properties(
+        **{"background-color": "#FFFDF9", "color": "#4A342B"}
+    ),
     use_container_width=True,
     hide_index=True
 )
